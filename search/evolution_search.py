@@ -36,17 +36,7 @@ parser.add_argument('--init_channels', type=int, default=24, help='# of filters 
 parser.add_argument('--layers', type=int, default=11, help='equivalent with N = 3')
 parser.add_argument('--epochs', type=int, default=25, help='# of epochs to train during architecture search')
 args = parser.parse_args()
-args.save = 'search-{}-{}-{}'.format(args.save, args.search_space, time.strftime("%Y%m%d-%H%M%S"))
-utils.create_exp_dir(args.save)
 
-log_format = '%(asctime)s %(message)s'
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format=log_format, datefmt='%m/%d %I:%M:%S %p')
-fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
-fh.setFormatter(logging.Formatter(log_format))
-logging.getLogger().addHandler(fh)
-
-pop_hist = []  # keep track of every evaluated architecture
 
 
 # ---------------------------------------------------------------------------------------------------------
@@ -162,4 +152,16 @@ def main():
 
 
 if __name__ == "__main__":
+    args.save = 'search-{}-{}-{}'.format(args.save, args.search_space,
+                                         time.strftime("%Y%m%d-%H%M%S"))
+    utils.create_exp_dir(args.save)
+
+    log_format = '%(asctime)s %(message)s'
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format=log_format, datefmt='%m/%d %I:%M:%S %p')
+    fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
+    fh.setFormatter(logging.Formatter(log_format))
+    logging.getLogger().addHandler(fh)
+
+    pop_hist = []  # keep track of every evaluated architecture
     main()
