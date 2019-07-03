@@ -33,7 +33,8 @@ parser.add_argument('--n_gens', type=int, default=50, help='population size')
 parser.add_argument('--n_offspring', type=int, default=40, help='number of offspring created per generation')
 # arguments for back-propagation training during search
 parser.add_argument('--init_channels', type=int, default=24, help='# of filters for first cell')
-parser.add_argument('--layers', type=int, default=11, help='equivalent with N = 3')
+parser.add_argument('--layers', type=int, default=11, help='equivalent with N = 3, all node '
+                                                           'layers + avg + linear')
 parser.add_argument('--epochs', type=int, default=25, help='# of epochs to train during architecture search')
 args = parser.parse_args()
 
@@ -44,6 +45,13 @@ args = parser.parse_args()
 # ---------------------------------------------------------------------------------------------------------
 class NAS(Problem):
     # first define the NAS problem (inherit from pymop)
+    '''
+    # n_var: the number of variables
+    # n_obj: the number of objectives, which must be 2 in this implement
+    # n_constr: the number of constrains
+    # xl, xu: variable boundaries
+    # overwrite the _evaluate function to get effected
+    '''
     def __init__(self, search_space='micro', n_var=20, n_obj=1, n_constr=0, lb=None, ub=None,
                  init_channels=24, layers=8, epochs=25, save_dir=None):
         super().__init__(n_var=n_var, n_obj=n_obj, n_constr=n_constr, type_var=np.int)
@@ -57,9 +65,20 @@ class NAS(Problem):
         self._n_evaluated = 0  # keep track of how many architectures are sampled
 
     def _evaluate(self, x, out, *args, **kwargs):
-
+        '''
+        this is the main effect func in pymoo lib, use out as `return`
+        :param x: encoding vectors, x.shape[0] for how many vectors are there
+                    [pop_size x n_var]
+        :param out: a container, to hold F&G key in the dict
+        :param args: for param without name in form of tuple
+        :param kwargs: for param with names in form of dict
+        [:return: optimize target F (and restrain G, which is not used in this problem)]
+        '''
         objs = np.full((x.shape[0], self.n_obj), np.nan)
 
+        '''
+        traversal every encoding vector in x. every arch has a unique id by aug 1 per iter
+        '''
         for i in range(x.shape[0]):
             arch_id = self._n_evaluated + 1
             print('\n')
@@ -70,6 +89,11 @@ class NAS(Problem):
                 genome = micro_encoding.convert(x[i, :])
             elif self._search_space == 'macro':
                 genome = macro_encoding.convert(x[i, :])
+            '''
+            genome: one list for a phase, contains all such lists
+                    example is available in decoder files
+            by calling `train_search.main`, a specific arch is trained and evaluated
+            '''
             performance = train_search.main(genome=genome,
                                             search_space=self._search_space,
                                             init_channels=self._init_channels,
@@ -93,7 +117,7 @@ class NAS(Problem):
 # Define what statistics to print or save for each generation
 # ---------------------------------------------------------------------------------------------------------
 def do_every_generations(algorithm):
-    # this function will be call every generation
+    # this function will be call after every generation
     # it has access to the whole algorithm class
     gen = algorithm.n_gen
     pop_var = algorithm.pop.get("X")
@@ -114,6 +138,11 @@ def main():
     logging.info("args = %s", args)
 
     # setup NAS search problem
+    '''
+    # for either problem setting, lb and ub is [0,1]
+    # macro is the one allowing different phase type
+    # micro is the one using identical block and repeat itself
+    '''
     if args.search_space == 'micro':  # NASNet search space
         n_var = int(4 * args.n_blocks * 2)
         lb = np.zeros(n_var)
@@ -143,6 +172,19 @@ def main():
                             n_offsprings=args.n_offspring,
                             eliminate_duplicates=True)
 
+    '''
+    optimise a PROBLEM by using the METHOD, call CALLBACK func on every iter
+    terminate on TERMINATION iter
+    1. call `problem._evaluate` to get evaluated
+    2. call `GeneticAlgorithm.survival._do` to get survivors. 
+        NonDominatedSorting and calc_crowding_distance
+        (`RankAndCrowdingSurvival` in this, CHANGED)
+    3. call callback function (`do_every_generations` in this)
+    4. call `GeneticAlgorithm.selection` to make selection. 
+        func_comp serve as a compare function
+        (`binary_tournament` in this, same as NSGA-II)
+    go back
+    '''
     res = minimize(problem,
                    method,
                    callback=do_every_generations,

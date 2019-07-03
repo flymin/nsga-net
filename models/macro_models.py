@@ -49,6 +49,10 @@ class EvoNetwork(nn.Module):
         if repeats is not None:
             assert len(repeats) == len(genome), "Need to supply repetition information for each phase."
 
+
+        '''
+        use vector to construct model accordingly
+        '''
         self.model = get_decoder(decoder, genome, channels, repeats).get_model()
 
         #

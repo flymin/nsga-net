@@ -34,7 +34,7 @@ class NSGANet(GeneticAlgorithm):
 # Binary Tournament Selection Function
 # ---------------------------------------------------------------------------------------------------------
 
-
+# This func is the same as nsga2.py
 def binary_tournament(pop, P, algorithm, **kwargs):
     if P.shape[1] != 2:
         raise ValueError("Only implemented for binary tournament!")
@@ -46,7 +46,7 @@ def binary_tournament(pop, P, algorithm, **kwargs):
 
         a, b = P[i, 0], P[i, 1]
 
-        # if at least one solution is infeasible
+        # if at least one solution is infeasible, CV for constraint violation
         if pop[a].CV > 0.0 or pop[b].CV > 0.0:
             S[i] = compare(a, pop[a].CV, b, pop[b].CV, method='smaller_is_better', return_random_if_equal=True)
 

@@ -22,9 +22,14 @@ import time
 from misc import utils
 from search import micro_encoding
 from search import macro_encoding
+'''
+This is the flops counter implemented by the author in misc folder
+'''
 from misc.flops_counter import add_flops_counting_methods
 
-
+'''
+Running device is fixed to cuda (by calling `cuda()` without conditions)
+'''
 device = 'cuda'
 
 
@@ -60,6 +65,10 @@ def main(genome, epochs, search_space='micro',
         'report_freq': report_freq,
     }
 
+    '''
+    decode the vector and construct arch accordingly. cut up 1-D string
+    using example see `*_models.demo()`
+    '''
     if search_space == 'micro':
         genotype = micro_encoding.decode(genome)
         model = Network(init_channels, CIFAR_CLASSES, layers, auxiliary, genotype)
@@ -100,6 +109,10 @@ def main(genome, epochs, search_space='micro',
     CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
     CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
 
+
+    '''
+    transform will be used in  `CIFAR10` class to pre-process data in `__getitem__()`
+    '''
     train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -116,6 +129,9 @@ def main(genome, epochs, search_space='micro',
         transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
     ])
 
+    '''
+    subclass of `torch.utils.data.Dataset` to construct `DataLoader`
+    '''
     train_data = my_cifar10.CIFAR10(root=data_root, train=True, download=True, transform=train_transform)
     valid_data = my_cifar10.CIFAR10(root=data_root, train=False, download=True, transform=valid_transform)
 
@@ -135,6 +151,9 @@ def main(genome, epochs, search_space='micro',
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, int(epochs))
 
+    '''
+    training procedure
+    '''
     for epoch in range(epochs):
         scheduler.step()
         logging.info('epoch %d lr %e', epoch, scheduler.get_lr()[0])
@@ -143,6 +162,9 @@ def main(genome, epochs, search_space='micro',
         train_acc, train_obj = train(train_queue, model, criterion, optimizer, train_params)
         logging.info('train_acc %f', train_acc)
 
+    '''
+    validation procedure
+    '''
     valid_acc, valid_obj = infer(valid_queue, model, criterion)
     logging.info('valid_acc %f', valid_acc)
 

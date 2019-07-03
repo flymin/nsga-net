@@ -6,6 +6,7 @@ import numpy as np
 
 
 def phase_dencode(phase_bit_string):
+    # this is resolved by solving a quadratic formula
     n = int(np.sqrt(2 * len(phase_bit_string) - 7/4) - 1/2)
     genome = []
     for i in range(n):
@@ -18,9 +19,15 @@ def phase_dencode(phase_bit_string):
 
 
 def convert(bit_string, n_phases=3):
+    '''
+    convert bit_string as form of every phase accordingly
+    :param bit_string: vector array contains bits in all phase
+    :param n_phases: phase num
+    :return: 2-D list [phase x bits_per_phase]
+    '''
     # assumes bit_string is a np array
     assert bit_string.shape[0] % n_phases == 0
-    phase_length = bit_string.shape[0] // n_phases
+    phase_length = bit_string.shape[0] // n_phases      # stands for num of nodes in a phase
     genome = []
     for i in range(0, bit_string.shape[0], phase_length):
         genome.append((bit_string[i:i+phase_length]).tolist())

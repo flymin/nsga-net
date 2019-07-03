@@ -40,7 +40,7 @@ class ChannelBasedDecoder(Decoder):
 
         self._model = None
 
-        # First, we remove all inactive phases.
+        # First, we remove all inactive phases. (if bits are all 0 in a phase)
         self._genome = self.get_effective_genome(list_genome)
         self._channels = channels[:len(self._genome)]
 
@@ -106,7 +106,7 @@ class ChannelBasedDecoder(Decoder):
     @staticmethod
     def get_effective_genome(genome):
         """
-        Get only the parts of the genome that are active.
+        Get only the parts of the genome that are active, which is not all zero in gnome
         :param genome: list, represents the genome
         :return: list
         """
